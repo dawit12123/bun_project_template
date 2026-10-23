@@ -29,7 +29,7 @@ export const describeUrl = (url: string): string => {
  */
 export const resolveTopology = (env: Record<string, string | undefined>): DatabaseTopology => {
   const defaultUrl = env.DATABASE_URL;
-  if (!defaultUrl) throw new Error("DATABASE_URL is not set (see database/.env.example)");
+  if (!defaultUrl) throw new Error("DATABASE_URL is not set (see the root .env.example)");
 
   const overrides = new Map<string, string>();
   for (const [key, value] of Object.entries(env)) {

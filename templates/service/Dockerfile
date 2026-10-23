@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # Build from the REPOSITORY ROOT (the service depends on workspace packages):
 #   docker build -f services/<name>/Dockerfile --build-arg SERVICE=services/<name> -t driversim/<name> .
-ARG BUN_VERSION=1.2.21
+ARG BUN_VERSION=1.2.23
 
 FROM oven/bun:${BUN_VERSION}-alpine AS build
 WORKDIR /repo

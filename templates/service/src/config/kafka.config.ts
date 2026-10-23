@@ -8,7 +8,7 @@ export const kafkaEnvSchema = z.object({
   KAFKA_CONSUMER_GROUP: optionalString(),
   KAFKA_CONSUMER_ENABLED: booleanFlag(true),
   KAFKA_SSL: booleanFlag(false),
-  KAFKA_SASL_MECHANISM: z.enum(["plain", "scram-sha-256", "scram-sha-512"]).optional(),
+  KAFKA_SASL_MECHANISM: optionalString().pipe(z.enum(["plain", "scram-sha-256", "scram-sha-512"]).optional()),
   KAFKA_SASL_USERNAME: optionalString(),
   KAFKA_SASL_PASSWORD: optionalString(),
 });

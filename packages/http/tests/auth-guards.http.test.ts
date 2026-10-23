@@ -104,3 +104,30 @@ describe("session revocation", () => {
     expect(res.body.error.message).toBe("Session has been revoked.");
   });
 });
+
+describe("public paths", () => {
+  test("listed paths skip authentication, everything else stays protected", async () => {
+    const { createHttpApp } = await import("../src/app.factory");
+    const { createRouter } = await import("../src/router.factory");
+    const app = createHttpApp({
+      service: { serviceName: "public-test", version: "0" },
+      logger: ctx.logs.logger,
+      trustProxy: false,
+      cors: { origins: [], credentials: false },
+      bodyLimitBytes: 1_024,
+      apiDocsEnabled: false,
+      readiness: { checks: [], isShuttingDown: () => false, startedAt: Date.now() },
+      auth: { verifier: ctx.auth.verifier, publicPaths: ["/api/v1/auth/login"] },
+    });
+    const router = createRouter();
+    router.post("/auth/login", (c) => c.json({ ok: true }));
+    router.post("/auth/logout", (c) => c.json({ ok: true }));
+    app.route("/api/v1", router);
+
+    expect((await request(app, "POST", "/api/v1/auth/login")).status).toBe(200);
+    // trailing slash is treated as the same public path (auth skipped; routing is strict → 404)
+    expect((await request(app, "POST", "/api/v1/auth/login/")).status).not.toBe(401);
+    expect((await request(app, "POST", "/api/v1/auth/logout")).status).toBe(401);
+    expect((await request(app, "POST", "/api/v1/auth/login-admin")).status).toBe(401);
+  });
+});

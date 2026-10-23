@@ -23,7 +23,7 @@
     "@driversim/observability": "workspace:*",
     "@driversim/redis": "workspace:*",
     "@driversim/testing": "workspace:*",
-    "@types/bun": "1.2.21",
+    "@types/bun": "1.2.23",
     "typescript": "5.7.3"
   }
 }

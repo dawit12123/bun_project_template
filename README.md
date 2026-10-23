@@ -21,6 +21,7 @@ Redpanda (Kafka API) and Prometheus.
 1. [Prerequisites](#prerequisites)
 2. [Repository layout](#repository-layout)
 3. [Getting started](#getting-started)
+   - [Run from the root](#run-from-the-root)
 4. [Running several services](#running-several-services)
 5. [Configuration reference](#configuration-reference)
 6. [Database model](#database-model)
@@ -38,7 +39,7 @@ Redpanda (Kafka API) and Prometheus.
 
 | Tool | Version | Notes |
 |---|---|---|
-| [Bun](https://bun.sh) | ≥ 1.2.21 | runtime, package manager and test runner (`npm i -g bun@1.2.21`) |
+| [Bun](https://bun.sh) | ≥ 1.2.23 | runtime, package manager and test runner (`npm i -g bun@1.2.23`) |
 | PostgreSQL | 16+ | via Docker (port **5433**) **or** an existing local install |
 | Docker Desktop | optional | only needed for `bun run infra:up` (Postgres, Redis, Redpanda, Prometheus) |
 
@@ -110,12 +111,12 @@ bun run infra:up              # Docker Desktop must be running
 Point every `DATABASE_URL` below at it, e.g.
 `postgres://postgres:<password>@localhost:5432/driversim`.
 
-### 3. Create the shared database
+### 3. Configure and create the shared database
 
 ```bash
-cp database/.env.example database/.env
-# Option B: edit database/.env → DATABASE_URL=postgres://postgres:<password>@localhost:5432/driversim
-bun run db:ensure             # creates the "driversim" database (once)
+bun run setup                 # creates .env (root, shared) + each service's .env, the database, migrations
+# Option B (no Docker): edit the root .env → DATABASE_URL=postgres://postgres:<password>@localhost:5432/driversim
+#                       and leave REDIS_URL / KAFKA_BROKERS empty, then run `bun run setup` again
 ```
 
 ### 4. Generate a service and apply its schema
@@ -130,29 +131,16 @@ bun run db:migrate            # creates schema auth_service and its tables
 
 Omit `--remove-example` to keep the example `note` domain as a reference.
 
-### 5. Configure and run it
+### 5. Run it
 
 ```bash
-cd services/auth-service
-cp .env.example .env
+bun run setup                 # creates services/auth-service/.env from its example
+bun run dev auth-service      # from the root (or `bun run dev` for every service)
 ```
 
-- **Option A (Docker):** the defaults already match.
-- **Option B (local Postgres, no Docker):** set
-
-  ```
-  DATABASE_URL=postgres://postgres:<password>@localhost:5432/driversim
-  REDIS_URL=
-  KAFKA_BROKERS=
-  AUTH_JWKS_URL=
-  AUTH_JWKS_JSON={"keys":[]}
-  ```
-
-```bash
-bun run dev                   # watch mode (restarts on save)
-# or
-bun run start                 # plain run
-```
+Settings are layered: the root `.env` holds what all services share (database, Redis, Kafka,
+token issuer, logging). `services/<name>/.env` holds what is specific to the service (name, port,
+schema, secrets) and may override any shared value.
 
 ### 6. Check it
 
@@ -165,22 +153,42 @@ bun run start                 # plain run
 | `http://localhost:4001/metrics` | Prometheus metrics |
 | `http://localhost:4001/api/v1/...` without a token | `401` with the standard error envelope |
 
-**Quick try without generating anything:** `cd templates/service && cp .env.example .env && bun run dev`
-serves the template on port 4000.
+**Quick try without generating anything:** in a repository without services, `bun run setup`
+and `bun run dev` run the template on port 4000.
 
 ---
+
+## Run from the root
+
+Everything can be started from the repository root. You never need to `cd` into a service:
+
+```bash
+bun run setup                 # once: creates missing .env files, the database, runs migrations
+bun run services              # list services, ports and .env status
+bun run dev                   # start EVERY service in watch mode, logs prefixed per service
+bun run dev auth-service      # start only the named service(s)
+bun run start [service…]      # same without watch mode
+```
+
+- Each service loads its **own** `services/<name>/.env`. Review `DATABASE_URL` and secrets after
+  `bun run setup` (the examples point at the Docker infrastructure on port 5433).
+- Watch mode reloads a service when its code **or the shared code** (`bootstrap/`, `packages/`)
+  changes.
+- Ctrl+C stops all services. If one service exits (e.g. invalid config), the others are stopped
+  too and the reason stays visible in the log.
+- With no generated services yet (fresh blueprint), these commands run `templates/service`.
 
 ## Running several services
 
 > Full guide: [Adding a new service](docs/ADDING-A-SERVICE.md).
 
-
-Each service runs in its own terminal, on its own port, with its own schema:
+Each service has its own port and schema. All of them start together from the root:
 
 ```bash
 bun run new-service student-service --remove-example   # port 4002, schema student_service
-bun install && bun run db:migrate
-cd services/student-service && cp .env.example .env && bun run dev
+bun install
+bun run setup                                          # its .env + migrations
+bun run dev                                            # every service, logs prefixed per service
 ```
 
 Ports and schemas are recorded in [`docs/SERVICES.md`](docs/SERVICES.md).
@@ -210,8 +218,11 @@ echoed, since they may be secrets.
 **Production** additionally requires `DATABASE_URL`, `REDIS_URL`, `KAFKA_BROKERS` and
 `AUTH_JWKS_URL`, and forbids `LOG_PRETTY`.
 
-The migrator reads `database/.env`: `DATABASE_URL` plus optional `DATABASE_URL__<SCHEMA>`
-overrides (see below).
+**Where settings live:** the root `.env` holds shared values for every service and the migrator
+(`DATABASE_URL`, `DATABASE_URL__<SCHEMA>`, `REDIS_URL`, `KAFKA_*`, `AUTH_ISSUER/AUDIENCE/JWKS_URL`,
+`LOG_*`, `CORS_ORIGINS`, `TEST_DATABASE_URL`). `services/<name>/.env` holds service-specific values
+(`SERVICE_NAME`, `PORT`, `DATABASE_SCHEMA`, secrets) and overrides root values. Load order: root
+`.env` → service `.env` → real environment variables.
 
 ---
 
@@ -233,7 +244,7 @@ driversim
   `DATABASE_EXTRA_SCHEMAS` adds schemas to the `search_path` for unqualified reads.
 - Migrations live in `database/migrations/`, named `NNNN_<schema>__<change>.up.sql` / `.down.sql`,
   and each one qualifies every object. Create one with `bun run db:create <schema> <change>`.
-- **Same DB or separate DBs is configuration.** `DATABASE_URL__<SCHEMA>` in `database/.env` moves
+- **Same DB or separate DBs is configuration.** `DATABASE_URL__<SCHEMA>` in the root `.env` moves
   a schema to another database, which then has its own history. Foreign keys cannot cross
   databases, and `db:migrate` refuses to run if one would.
 - Each service writes only to its own schema. In staging/production, enforce this with one
@@ -272,12 +283,17 @@ bun test tests/unit                   # one folder
 ```
 
 Unit and HTTP tests need no infrastructure, because they run on in-memory adapters. Integration
-tests run only when `TEST_DATABASE_URL` points at a **disposable** database. Its name must end in
-`_test`, because every schema in it is dropped on each run:
+tests run when `TEST_DATABASE_URL` (root `.env`) points at a **disposable** database whose name
+ends in `_test`. Each service derives its own database from it (`driversim_test` →
+`driversim_<schema>_test`) because workspaces test in parallel and every run drops all schemas.
 
 ```bash
-TEST_DATABASE_URL=postgres://postgres:<password>@localhost:5432/driversim_test bun test
+bun run test                          # from the root: every workspace, in parallel
+cd services/auth-service && bun run test
 ```
+
+Package-level integration suites (`packages/infra/*`, `database/`) run when you pass
+`TEST_DATABASE_URL` explicitly.
 
 ---
 
@@ -285,6 +301,8 @@ TEST_DATABASE_URL=postgres://postgres:<password>@localhost:5432/driversim_test b
 
 | Where | Command | What |
 |---|---|---|
+| root | `bun run setup` | first-time setup: .env files, database, migrations |
+| root | `bun run dev [service…]` · `bun run start [service…]` · `bun run services` | run services from the root |
 | root | `bun run new-service <name> [--port N] [--remove-example] [--description "…"]` | generate a service |
 | root | `bun run typecheck` · `bun run test` · `bun run lint` · `bun run lint:fix` | every workspace |
 | root | `bun run infra:up` · `infra:down` · `infra:logs` | local Docker infrastructure |
@@ -328,7 +346,8 @@ service container.
 | Port 5432 already in use when starting Docker | Compose maps Postgres to **5433** for that reason. Use 5433 in URLs, or stop the local Postgres. |
 | `401` on every API call | Expected without a token. Tokens come from `auth-service`. Set `AUTH_JWKS_URL` (or `AUTH_JWKS_JSON` locally). |
 | Windows: `Permission denied` when moving or renaming folders | VS Code holds file handles. Close the files or copy then delete. |
-| Windows: Bun segfault in tests that drop databases in `afterAll` | Known Bun 1.2.21 issue. Recreate test databases at the start of a test instead. |
+| Windows: Bun segfault in tests that drop databases in `afterAll` | Seen with Bun 1.2.21. Recreate test databases at the start of a test instead. |
+| A request hangs after a database constraint error (e.g. duplicate key) | Bun ≤ 1.2.21 left the pooled connection unusable after an error inside a transaction. Use Bun **≥ 1.2.23** (pinned). |
 | Windows: Ctrl+C / `kill` does not log `shutdown started` | Windows has no real SIGTERM. Graceful shutdown works on Linux/Docker. |
 
 ---

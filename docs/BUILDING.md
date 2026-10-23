@@ -65,7 +65,7 @@ The Dockerfile:
 
 1. **build stage:** copies the repo (minus `.dockerignore`d files) and runs
    `bun install --frozen-lockfile --production`.
-2. **runtime stage:** `oven/bun:1.2.21-alpine`, copies only `node_modules`, `bootstrap/`,
+2. **runtime stage:** `oven/bun:1.2.23-alpine`, copies only `node_modules`, `bootstrap/`,
    `packages/` and the service. Runs as the non-root `bun` user, with a `HEALTHCHECK` on
    `/health/live`.
 

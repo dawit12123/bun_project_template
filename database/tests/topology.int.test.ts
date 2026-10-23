@@ -17,7 +17,7 @@ const fixtures = (name: string) => join(import.meta.dir, "fixtures", name);
 
 /**
  * Drops the database so each test starts clean. Done at the START of a test only: forcing
- * drops in afterAll crashes Bun 1.2.21 on Windows (connections already closed client-side).
+ * drops in afterAll crashed Bun 1.2.21 on Windows (connections already closed client-side).
  */
 const recreate = async (url: string) => {
   const name = new URL(url).pathname.slice(1);

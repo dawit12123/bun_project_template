@@ -34,7 +34,12 @@ export interface HttpAppOptions {
     startedAt: number;
   };
   /** Every route under the API prefix requires a verified access token. */
-  auth: { verifier: TokenVerifier; revocations?: SessionRevocationStore };
+  auth: {
+    verifier: TokenVerifier;
+    revocations?: SessionRevocationStore;
+    /** Exact API paths that do not require a token (login, registration, …). */
+    publicPaths?: readonly string[];
+  };
 }
 
 /**

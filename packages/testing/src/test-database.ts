@@ -5,6 +5,19 @@ import { SQL } from "bun";
 
 export const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 
+/**
+ * A dedicated test database per service, derived from the shared TEST_DATABASE_URL:
+ * `…/driversim_test` → `…/driversim_<schema>_test`. Workspaces run their tests in parallel,
+ * and each one resets its database, so they must never share one.
+ */
+export const testDatabaseUrlFor = (schema: string, base = TEST_DATABASE_URL): string | undefined => {
+  if (!base) return undefined;
+  const url = new URL(base);
+  const name = url.pathname.slice(1);
+  url.pathname = `/${name.endsWith("_test") ? name.slice(0, -"_test".length) : name}_${schema}_test`;
+  return url.toString();
+};
+
 /** Integration suites run only when TEST_DATABASE_URL points at a disposable database. */
 export const describeWithDatabase = TEST_DATABASE_URL ? describe : describe.skip;
 

@@ -39,4 +39,15 @@ describe("loadConfig", () => {
     }
     throw new Error("expected ConfigError");
   });
+
+  test("blank optional values (as in .env.example) count as unset", () => {
+    const config = loadConfig({
+      AUTH_JWKS_JSON: JWKS,
+      KAFKA_SASL_MECHANISM: "",
+      REDIS_URL: "",
+      DATABASE_URL: "",
+    });
+    expect(config.kafka.sasl).toBeUndefined();
+    expect(config.redis.url).toBeUndefined();
+  });
 });

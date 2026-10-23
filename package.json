@@ -5,9 +5,13 @@
   "type": "module",
   "workspaces": ["bootstrap", "database", "packages/*", "packages/infra/*", "templates/*", "services/*"],
   "engines": {
-    "bun": ">=1.2.21"
+    "bun": ">=1.2.23"
   },
   "scripts": {
+    "dev": "bun scripts/run.ts dev",
+    "start": "bun scripts/run.ts start",
+    "services": "bun scripts/run.ts list",
+    "setup": "bun scripts/run.ts setup",
     "new-service": "bun scripts/new-service.ts",
     "typecheck": "bun run --filter \"*\" typecheck",
     "test": "bun run --filter \"*\" test",
@@ -16,11 +20,11 @@
     "infra:up": "docker compose -f docker/docker-compose.yml up -d",
     "infra:down": "docker compose -f docker/docker-compose.yml down",
     "infra:logs": "docker compose -f docker/docker-compose.yml logs -f",
-    "db:ensure": "bun run --cwd database migrate ensure-database",
-    "db:migrate": "bun run --cwd database migrate up",
-    "db:rollback": "bun run --cwd database migrate down",
-    "db:status": "bun run --cwd database migrate status",
-    "db:create": "bun run --cwd database migrate create"
+    "db:ensure": "bun --env-file .env --env-file database/.env database/scripts/migrate.ts ensure-database",
+    "db:migrate": "bun --env-file .env --env-file database/.env database/scripts/migrate.ts up",
+    "db:rollback": "bun --env-file .env --env-file database/.env database/scripts/migrate.ts down",
+    "db:status": "bun --env-file .env --env-file database/.env database/scripts/migrate.ts status",
+    "db:create": "bun --env-file .env --env-file database/.env database/scripts/migrate.ts create"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4"

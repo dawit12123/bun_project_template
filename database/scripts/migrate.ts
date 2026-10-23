@@ -7,7 +7,7 @@
  *   bun run db:create <schema> <name>          scaffold NNNN_<schema>__<name>.up.sql / .down.sql
  *   bun run db:ensure                          create every configured database
  *
- * Topology (database/.env):
+ * Topology (root .env; database/.env may override for the migrator only):
  *   DATABASE_URL=…                  default database: every schema lives here unless overridden
  *   DATABASE_URL__<SCHEMA>=…        put one schema in another database (no FKs across databases)
  *

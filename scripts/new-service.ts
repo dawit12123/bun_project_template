@@ -157,17 +157,17 @@ Generated from \`templates/service\` — see the monorepo docs for the architect
 ## Run locally
 
 \`\`\`bash
-(cd ../.. && bun run db:migrate)   # shared migration history: database/migrations
-cp .env.example .env               # adjust if needed
-bun run db:seed                    # optional demo data
-bun run dev
+# from the repository root
+bun run setup                      # root .env (shared) + this service's .env, migrations
+bun run dev ${name}                # or: bun run dev (every service)
 \`\`\`
+
+Shared settings come from the root \`.env\`; this folder's \`.env\` holds service-specific values.
 
 ## Checks
 
 \`\`\`bash
-bun run typecheck && bun run lint && bun test
-TEST_DATABASE_URL=postgres://.../driversim_test bun run test:integration
+bun run check                      # typecheck + lint + tests (TEST_DATABASE_URL from the root .env)
 \`\`\`
 `;
 
@@ -255,12 +255,10 @@ const main = async (): Promise<void> => {
   console.log(
     values["remove-example"] ? "  example domain removed" : "  example `note` domain kept for reference",
   );
-  console.log(`\nNext steps:
+  console.log(`\nNext steps (from the repository root):
   bun install
-  bun run db:migrate
-  cd ${relative(ROOT, target)}
-  cp .env.example .env
-  bun run dev`);
+  bun run setup                 # creates ${relative(ROOT, target)}/.env, applies migrations
+  bun run dev ${name}`);
 };
 
 await main();

@@ -24,8 +24,8 @@ Today every schema lives in one database. The layout is configuration, not code:
 
 | Where | Setting | Effect |
 |---|---|---|
-| `database/.env` | `DATABASE_URL` | default database: every schema migrates here |
-| `database/.env` | `DATABASE_URL__<SCHEMA>` | that schema (e.g. `DATABASE_URL__STUDENT_SERVICE`) migrates into another database, with its own history |
+| root `.env` | `DATABASE_URL` | default database: every schema migrates here |
+| root `.env` | `DATABASE_URL__<SCHEMA>` | that schema (e.g. `DATABASE_URL__STUDENT_SERVICE`) migrates into another database, with its own history |
 | service `.env` | `DATABASE_URL` | the database the service connects to (same URL as its schema's target) |
 | service `.env` | `DATABASE_SCHEMA` | the schema it owns and writes to (default: service name in snake_case) |
 | service `.env` | `DATABASE_EXTRA_SCHEMAS` | other schemas **in the same database** added to `search_path` for unqualified reads |
@@ -63,7 +63,8 @@ Rules:
 - Never edit an applied migration (the migrator detects checksum drift). Add a new one.
 - `bun run new-service` appends the new service's schema migrations here automatically.
 
-Configure the migrator with `database/.env` (see `.env.example`). It needs rights to create
+The migrator reads the repository root `.env` (see `.env.example`); an optional
+`database/.env` overrides it for the migrator only (e.g. an admin user). It needs rights to create
 schemas.
 
 ## Enforcing ownership with roles (staging/production)

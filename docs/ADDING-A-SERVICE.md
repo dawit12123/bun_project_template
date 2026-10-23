@@ -39,19 +39,21 @@ What the generator does:
 5. Adds a row to [`SERVICES.md`](SERVICES.md).
 6. Formats the result with Biome.
 
-## 3. Register and migrate
+## 3. Register, configure and migrate
 
 ```bash
 bun install                 # registers the new workspace (@driversim/<name>)
-bun run db:migrate          # creates schema <schema> with event_outbox / event_inbox
+bun run setup               # creates services/<name>/.env, applies migrations (schema + outbox/inbox)
 ```
+
+Shared settings (database, Redis, Kafka, token issuer, logging) come from the **root `.env`**.
+`services/<name>/.env` holds only what is specific to the service (`SERVICE_NAME`, `PORT`,
+`DATABASE_SCHEMA`, secrets) and may override any root value.
 
 ## 4. Run it
 
 ```bash
-cd services/student-service
-cp .env.example .env        # adjust DATABASE_URL / REDIS_URL / KAFKA_BROKERS for your machine
-bun run dev
+bun run dev student-service      # from the repository root (or `bun run dev` for every service)
 ```
 
 Check `http://localhost:<port>/health/ready` and `http://localhost:<port>/docs`.
@@ -106,15 +108,15 @@ create table student_service.students (
 
 ```bash
 cd services/<name>
-bun run check                       # typecheck + lint + tests
-TEST_DATABASE_URL=postgres://…/driversim_test bun run test:integration
+bun run check                       # typecheck + lint + tests (TEST_DATABASE_URL from the root .env)
 bun run openapi:export              # review openapi/openapi.json
 ```
 
 - [ ] `SERVICES.md` row and description are correct
 - [ ] migrations qualify every object and touch only this service's schema
 - [ ] every route has guards (`requireSchoolAccess` for school data + `requirePermissions`)
-- [ ] `.env.example` documents any new variable (and `src/config/*.config.ts` validates it)
+- [ ] new service-specific variables are in `services/<name>/.env.example`, shared ones in the root
+      `.env.example` (and `src/config/*.config.ts` validates them)
 - [ ] Postman collection / API docs updated for the frontend teams
 
 ## Removing a service
