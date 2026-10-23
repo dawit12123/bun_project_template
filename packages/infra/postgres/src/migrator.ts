@@ -30,6 +30,12 @@ interface AppliedRow {
 const TABLE = DATABASE_TABLES.MIGRATIONS;
 
 /** Loads `NNNN_name.up.sql` / `NNNN_name.down.sql` pairs sorted by version. */
+/** Schema named by a `NNNN_<schema>__<change>` migration; undefined for unscoped names. */
+export const migrationSchema = (name: string): string | undefined => {
+  const separator = name.indexOf("__");
+  return separator > 0 ? name.slice(0, separator) : undefined;
+};
+
 export const loadMigrationFiles = async (directory: string): Promise<MigrationFile[]> => {
   const byVersion = new Map<number, { name: string; up?: string; down?: string }>();
   for (const file of (await readdir(directory)).sort()) {
@@ -68,11 +74,13 @@ export class Migrator {
     private readonly sql: SqlClient,
     private readonly directory: string,
     private readonly logger: Logger,
+    /** Restricts the migrator to some files, e.g. the schemas that live in this database. */
+    private readonly include: (file: MigrationFile) => boolean = () => true,
   ) {}
 
   async status(): Promise<MigrationStatus[]> {
     await this.#ensureTable();
-    const [files, applied] = await Promise.all([loadMigrationFiles(this.directory), this.#applied()]);
+    const [files, applied] = await Promise.all([this.#files(), this.#applied()]);
     const statuses: MigrationStatus[] = files.map((file) => {
       const row = applied.get(file.version);
       if (!row) return { version: file.version, name: file.name, state: "pending", appliedAt: null };
@@ -90,7 +98,7 @@ export class Migrator {
   /** Applies all pending migrations; returns the versions applied. */
   async up(): Promise<number[]> {
     await this.#ensureTable();
-    const files = await loadMigrationFiles(this.directory);
+    const files = await this.#files();
     this.#assertNoDrift(files, await this.#applied());
 
     const appliedNow: number[] = [];
@@ -114,7 +122,7 @@ export class Migrator {
   /** Reverts the latest `steps` applied migrations; returns the versions reverted. */
   async down(steps = 1): Promise<number[]> {
     await this.#ensureTable();
-    const files = new Map((await loadMigrationFiles(this.directory)).map((file) => [file.version, file]));
+    const files = new Map((await this.#files()).map((file) => [file.version, file]));
     const reverted: number[] = [];
 
     for (let index = 0; index < steps; index += 1) {
@@ -156,6 +164,10 @@ export class Migrator {
         checksum   text        not null,
         applied_at timestamptz not null default now()
       )`);
+  }
+
+  async #files(): Promise<MigrationFile[]> {
+    return (await loadMigrationFiles(this.directory)).filter(this.include);
   }
 
   async #applied(): Promise<Map<number, AppliedRow>> {

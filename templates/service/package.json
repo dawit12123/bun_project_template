@@ -18,16 +18,12 @@
     "test:http": "bun test tests/http",
     "test:integration": "bun test tests/integration",
     "check": "bun run typecheck && bun run lint && bun test",
-    "db:ensure": "bun scripts/migrate.ts ensure-database",
-    "db:migrate": "bun scripts/migrate.ts up",
-    "db:rollback": "bun scripts/migrate.ts down",
-    "db:status": "bun scripts/migrate.ts status",
-    "db:create": "bun scripts/migrate.ts create",
     "db:seed": "bun scripts/seed.ts",
     "openapi:export": "bun scripts/export-openapi.ts"
   },
   "dependencies": {
     "@driversim/auth": "workspace:*",
+    "@driversim/bootstrap": "workspace:*",
     "@driversim/core": "workspace:*",
     "@driversim/http": "workspace:*",
     "@driversim/messaging": "workspace:*",

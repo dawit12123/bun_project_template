@@ -1,28 +1,21 @@
 import { registerRoutes } from "@/routes";
+import type { Runtime } from "@driversim/bootstrap";
 import { createHttpApp } from "@driversim/http";
 import { FixedWindowRateLimiter } from "@driversim/redis";
 import type { Container } from "./container";
-
-export interface AppState {
-  shuttingDown: boolean;
-  startedAt: number;
-}
 
 /**
  * Builds the HTTP application: the platform stack from @driversim/http (middleware, health,
  * metrics, docs, authentication) plus this service's domain routers. Opens no ports, so tests
  * call `app.request()` directly.
  */
-export const createApp = (
-  container: Container,
-  state: AppState = { shuttingDown: false, startedAt: Date.now() },
-) => {
+export const createApp = (container: Container, runtime: Runtime = container.runtime) => {
   const { config } = container;
 
   const app = createHttpApp({
     service: { serviceName: config.app.serviceName, version: config.app.version },
-    logger: container.logger,
-    metrics: config.metrics.enabled ? container.metrics : undefined,
+    logger: runtime.logger,
+    metrics: config.metrics.enabled ? runtime.metrics : undefined,
     trustProxy: config.http.trustProxy,
     cors: config.http.cors,
     bodyLimitBytes: config.http.bodyLimitBytes,
@@ -36,8 +29,8 @@ export const createApp = (
       : undefined,
     readiness: {
       checks: container.readinessChecks,
-      isShuttingDown: () => state.shuttingDown,
-      startedAt: state.startedAt,
+      isShuttingDown: () => runtime.state.shuttingDown,
+      startedAt: runtime.state.startedAt,
     },
     auth: { verifier: container.tokenVerifier, revocations: container.revocations },
   });

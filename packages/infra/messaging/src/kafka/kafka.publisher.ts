@@ -16,7 +16,8 @@ export class KafkaEventPublisher implements EventPublisher {
     });
   }
 
-  #connect(): Promise<void> {
+  /** Connects the producer; called at startup so the first publish does not pay for it. */
+  connect(): Promise<void> {
     this.#connecting ??= this.#producer.connect().catch((error: unknown) => {
       this.#connecting = null;
       throw error;
@@ -26,7 +27,7 @@ export class KafkaEventPublisher implements EventPublisher {
 
   async publish(messages: readonly OutboundMessage[]): Promise<void> {
     if (messages.length === 0) return;
-    await this.#connect();
+    await this.connect();
 
     const byTopic = new Map<string, OutboundMessage[]>();
     for (const message of messages)

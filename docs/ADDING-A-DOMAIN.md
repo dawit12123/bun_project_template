@@ -19,7 +19,7 @@ builders from `@driversim/http`, and the outbox writer from `@driversim/messagin
 | 10 | `src/repositories/postgres/student.repository.ts` · `student.unit-of-work.ts` | Postgres adapters |
 | 11 | `src/repositories/memory/student.repository.ts` · `student.unit-of-work.ts` | in-memory adapters (tests, dev) |
 | 12 | `src/controllers/student.controller.ts` · `src/routes/student.routes.ts` | HTTP adapter + OpenAPI routes + guards |
-| 13 | `database/migrations/NNNN_students.up.sql` / `.down.sql` | `bun run db:create students` |
+| 13 | root `database/migrations/NNNN_<schema>__students.up.sql` / `.down.sql` | `bun run db:create <schema> students` (from the repo root), qualifying every object |
 | 14 | `src/seeds/student.seed.ts` + register in `src/seeds/index.ts` | idempotent initial data |
 | 15 | wire in `src/bootstrap/container.ts` (unit of work + service) and `src/routes/index.ts` (`RouteServices` + a router factory) | the only wiring points |
 | 16 | tests: `tests/unit/models`, `tests/unit/services`, `tests/http`, `tests/integration` | mirror the note tests |

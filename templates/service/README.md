@@ -8,14 +8,16 @@ the example `note` domain. Don't add business features here: generate a service 
 | | |
 |---|---|
 | Port | `4000` |
-| Database | `service_template` (tests: `service_template_test`) |
+| Database schema | `service_template` (blueprint migrations in `database/migrations`, adopted into the shared history by `new-service`) |
 | OpenAPI | http://localhost:4000/docs |
 
 ## Run
 
 ```bash
 cp .env.example .env
-bun run db:ensure && bun run db:migrate && bun run db:seed
+# apply the blueprint migrations to your local database (template only)
+(cd ../../database && bun scripts/migrate.ts up --dir ../templates/service/database/migrations)
+bun run db:seed
 bun run dev
 ```
 
@@ -26,7 +28,7 @@ and set `AUTH_JWKS_JSON={"keys":[]}`.
 
 ```bash
 bun test                                                   # unit + HTTP (in-memory)
-TEST_DATABASE_URL=postgres://…/service_template_test bun test   # + Postgres integration
+TEST_DATABASE_URL=postgres://…/driversim_test bun test   # + Postgres integration
 ```
 
 See `../../docs/ARCHITECTURE.md` for the layout and dependency rules.

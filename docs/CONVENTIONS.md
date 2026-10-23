@@ -11,8 +11,10 @@
 | Permissions | `<resource>:<action>[:<scope>]` | `students:read`, `students:documents:verify` |
 | Events | `<domain>.<entity>.<past-tense>` + integer `version` | `student.registered` v1 |
 | Topics | `driversim.<bounded-context>.events.v<major>` | `driversim.students.events.v1` |
-| Tables | snake_case plural; ids are UUIDv7 | `students`, `student_documents` |
-| Migrations | `NNNN_<snake_name>.up.sql` + `.down.sql`, never edited after merge | `0003_students.up.sql` |
+| Schemas | service name in snake_case | `student_service` |
+| Tables | snake_case plural; ids are UUIDv7; unqualified in service code, qualified in migrations | `student_service.students` |
+| Migrations | `database/migrations/NNNN_<schema>__<change>.up.sql` + `.down.sql`, one schema per file, never edited after merge | `0007_student_service__documents.up.sql` |
+| Cross-service reads | qualified name, read-only grant | `select … from auth_service.users` |
 
 ## HTTP API
 

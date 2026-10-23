@@ -1,5 +1,14 @@
-import type { ReadinessCheck } from "@driversim/core";
+import type { ReadinessCheck, StartupTask } from "@driversim/core";
 import type { SqlClient } from "./postgres.client";
+
+/** Opens the pool's first connection (and validates credentials/schema) during startup. */
+export const postgresStartupTask = (sql: SqlClient): StartupTask => ({
+  name: "postgres",
+  critical: true,
+  run: async () => {
+    await sql`select 1`;
+  },
+});
 
 export const postgresReadinessCheck = (sql: SqlClient): ReadinessCheck => ({
   name: "postgres",

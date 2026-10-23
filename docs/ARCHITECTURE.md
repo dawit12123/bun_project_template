@@ -10,15 +10,19 @@
                   └─────┬─────┘
    ┌────────────────────┼─────────────────────┐
 ┌──▼──────────┐  ┌──────▼──────────┐   ┌──────▼───────┐
-│auth-service │  │student-service  │   │ …-service    │   each: own PostgreSQL database
+│auth-service │  │student-service  │   │ …-service    │   each: own schema in the shared DB
 └──┬──────▲───┘  └──┬───────────▲──┘   └──┬───────────┘
    │ JWKS │ outbox  │ verify JWT│ outbox   │
    │      └─────────┴──── Redpanda (Kafka API) ─────────── events between services
    └── /.well-known/jwks.json → every service verifies tokens locally (no per-request call)
 ```
 
-- **Database per service.** No service reads another service's tables. Data crosses boundaries
-  only via HTTP APIs or events.
+- **One database, one schema per service** (ADR-0006). Relations between services are real
+  foreign keys across schemas. Each service writes only to its own schema (enforced by Postgres
+  roles) and connects with `search_path=<schema>[,extra schemas]`. Migrations form one ordered
+  history in `database/migrations/`. Which database each schema lives in is configuration
+  (`DATABASE_URL__<SCHEMA>`), so a service can later move to its own database (see
+  `database/README.md`).
 - **Zero-trust identity.** Each service verifies the access token itself against auth-service's
   JWKS. Identity headers from clients or proxies are ignored (ADR-0002).
 - **Reliable events.** State changes and their events commit in one transaction (outbox). A relay
@@ -81,6 +85,35 @@ src/
 Because services depend only on ports, every use case runs unchanged against Postgres or the
 in-memory adapters. The HTTP tests exercise the whole app without any infrastructure.
 
+## Startup lifecycle (everything is built once, centrally)
+
+`src/main.ts` is a single line, `runService(serviceDefinition)`. The service declares WHAT it
+consists of (`bootstrap/bootstrap.ts`: config loader, runtime options, container and app
+factories). `@driversim/bootstrap` owns HOW every service starts and stops:
+
+```
+loadConfig()                         validate env once (fail fast, every problem listed)
+createRuntime()                      THE logger, metrics registry and clock of the process (one each)
+createContainer(config, runtime)     every adapter, repository, service, handler and worker, ONCE;
+                                     they all receive the runtime's logger/metrics/clock
+container.initialize()               connect Postgres*, Redis*, Kafka producer + admin, prefetch JWKS
+                                     (* critical: unreachable → StartupError, port never opens)
+createApp(container, runtime)        middleware, guards, controllers, routers built once
+openApiDocument()                    OpenAPI generated once and cached
+container.workers[].start()          outbox relay, event consumer
+startHttpServer()                    only now does the port accept traffic
+graceful shutdown (SIGTERM/SIGINT)   stop HTTP → stop workers (reverse) → close connections
+```
+
+Scripts (`db:seed`, `openapi:export`) build the same runtime. Nothing in a service calls
+`createJsonLogger` or `new PrometheusMetrics` directly.
+
+Per request, the only things created are request-scoped by nature: the request/correlation id,
+a child logger, and the repository/outbox objects bound to that request's transaction. No
+client, pool, verifier, router or schema is created or connected during a request. Readiness
+probes reuse the connections opened at startup (one Kafka admin, the Postgres pool, the Redis
+client).
+
 ## Request lifecycle
 
 ```
@@ -104,7 +137,7 @@ consumer → validate envelope → inbox (consumer, event_id) in same tx as hand
 
 | Setting present | Adapter | Absent (dev/test only) |
 |---|---|---|
-| `DATABASE_URL` | Postgres repositories, outbox, inbox | in-memory repositories + outbox |
+| `DATABASE_URL` (+ `DATABASE_SCHEMA`) | Postgres repositories, outbox, inbox in the service schema | in-memory repositories + outbox |
 | `REDIS_URL` | Redis key-value store (rate limits, revocations) | in-memory store |
 | `KAFKA_BROKERS` | kafkajs producer/consumer | in-memory event bus |
 | `AUTH_JWKS_URL` | remote JWKS (cached, rotation-aware) | `AUTH_JWKS_JSON` inline keys |

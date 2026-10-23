@@ -5,10 +5,11 @@
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { createApp } from "@/bootstrap/app";
+import { toRuntimeOptions } from "@/bootstrap/bootstrap";
 import { createContainer } from "@/bootstrap/container";
 import { loadConfig } from "@/config";
-import { SYSTEM_ROUTES } from "@driversim/http";
-import { createJsonLogger } from "@driversim/observability";
+import { createRuntime } from "@driversim/bootstrap";
+import { openApiDocument } from "@driversim/http";
 
 const config = loadConfig({
   ...process.env,
@@ -20,13 +21,16 @@ const config = loadConfig({
   AUTH_JWKS_URL: "",
   AUTH_JWKS_JSON: JSON.stringify({ keys: [] }),
 });
-const container = createContainer(config, createJsonLogger({ level: "silent" }));
-const response = await createApp(container).request(SYSTEM_ROUTES.OPENAPI);
-if (!response.ok) throw new Error(`OpenAPI generation failed with HTTP ${response.status}`);
+const runtime = createRuntime({ ...toRuntimeOptions(config), log: { level: "silent" } });
+const container = createContainer(config, runtime);
+const document = openApiDocument(createApp(container, runtime), {
+  serviceName: runtime.serviceName,
+  version: runtime.version,
+});
 
 const outDir = join(import.meta.dir, "..", "openapi");
 await mkdir(outDir, { recursive: true });
 const outFile = join(outDir, "openapi.json");
-await Bun.write(outFile, `${JSON.stringify(await response.json(), null, 2)}\n`);
+await Bun.write(outFile, `${JSON.stringify(document, null, 2)}\n`);
 await container.close();
 console.log(`wrote ${outFile}`);

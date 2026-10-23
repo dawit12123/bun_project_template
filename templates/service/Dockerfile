@@ -14,6 +14,7 @@ ENV NODE_ENV=production \
     PORT=4000
 WORKDIR /repo
 COPY --from=build --chown=bun:bun /repo/node_modules ./node_modules
+COPY --from=build --chown=bun:bun /repo/bootstrap ./bootstrap
 COPY --from=build --chown=bun:bun /repo/packages ./packages
 COPY --from=build --chown=bun:bun /repo/${SERVICE} ./${SERVICE}
 WORKDIR /repo/${SERVICE}

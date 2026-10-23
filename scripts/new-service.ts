@@ -4,9 +4,10 @@
  *   bun run new-service <name> [--port 4002] [--remove-example] [--description "..."] [--no-register]
  *
  *   --remove-example  drop the example `note` domain (files, wiring, migration, tests)
- *   --no-register     do not touch the shared service registry / local database init script
+ *   --no-register     leave shared files untouched: no registry row, and the schema migrations
+ *                     stay inside the service instead of joining database/migrations
  */
-import { cp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { parseArgs } from "node:util";
 
@@ -14,10 +15,11 @@ const ROOT = join(import.meta.dir, "..");
 const TEMPLATE_DIR = join(ROOT, "templates", "service");
 const SERVICES_DIR = join(ROOT, "services");
 const REGISTRY_FILE = join(ROOT, "docs", "SERVICES.md");
-const DB_INIT_FILE = join(ROOT, "docker", "postgres", "init", "01-databases.sql");
+const SHARED_MIGRATIONS_DIR = join(ROOT, "database", "migrations");
+const MIGRATION_FILE = /^(\d{4,})_([a-z0-9_]+)\.(up|down)\.sql$/;
 
 const TEMPLATE_NAME = "service-template";
-const TEMPLATE_DB = "service_template";
+const TEMPLATE_SCHEMA = "service_template";
 const TEMPLATE_PORT = "4000";
 const FIRST_SERVICE_PORT = 4001;
 const EXAMPLE_MARKER = "@example-domain";
@@ -44,8 +46,8 @@ const EXAMPLE_PATHS = [
   "src/routes/note.routes.ts",
   "src/seeds/note.seed.ts",
   "src/services/note.service.ts",
-  "database/migrations/0002_notes.up.sql",
-  "database/migrations/0002_notes.down.sql",
+  "database/migrations/0002_service_template__notes.up.sql",
+  "database/migrations/0002_service_template__notes.down.sql",
   "tests/unit/dto/note.validator.test.ts",
   "tests/unit/models/note.model.test.ts",
   "tests/unit/services/note.service.test.ts",
@@ -106,7 +108,41 @@ const removeExampleDomain = async (target: string): Promise<void> => {
   }
 };
 
-const serviceReadme = (name: string, port: number, database: string, description: string) => `# ${name}
+/**
+ * Appends the service's schema migrations to the shared history (renumbered after the latest
+ * version) and points the service's integration tests at that history.
+ */
+const adoptMigrations = async (target: string, schema: string): Promise<string[]> => {
+  const localDir = join(target, "database", "migrations");
+  await mkdir(SHARED_MIGRATIONS_DIR, { recursive: true });
+  const versions = (await readdir(SHARED_MIGRATIONS_DIR))
+    .map((file) => MIGRATION_FILE.exec(file)?.[1])
+    .filter((version): version is string => version !== undefined)
+    .map(Number);
+  let next = Math.max(0, ...versions);
+  const renumbered = new Map<string, string>();
+  const adopted: string[] = [];
+
+  for (const file of (await readdir(localDir)).sort()) {
+    const match = MIGRATION_FILE.exec(file);
+    if (!match) continue;
+    const [, version, migrationName, direction] = match as unknown as [string, string, string, string];
+    if (!renumbered.has(version)) renumbered.set(version, String(++next).padStart(4, "0"));
+    const destination = `${renumbered.get(version)}_${migrationName.replace(TEMPLATE_SCHEMA, schema)}.${direction}.sql`;
+    await rename(join(localDir, file), join(SHARED_MIGRATIONS_DIR, destination));
+    adopted.push(destination);
+  }
+  await rm(join(target, "database"), { recursive: true, force: true });
+  await rewrite(join(target, "tests", "helpers", "test-database.ts"), (content) =>
+    content.replace(
+      'join(import.meta.dir, "..", "..", "database", "migrations")',
+      'join(import.meta.dir, "..", "..", "..", "..", "database", "migrations")',
+    ),
+  );
+  return adopted;
+};
+
+const serviceReadme = (name: string, port: number, schema: string, description: string) => `# ${name}
 
 ${description}
 
@@ -115,16 +151,15 @@ Generated from \`templates/service\` — see the monorepo docs for the architect
 | | |
 |---|---|
 | Port | \`${port}\` |
-| Database | \`${database}\` (tests: \`${database}_test\`) |
+| Database schema | \`${schema}\` in the shared \`driversim\` database |
 | OpenAPI | http://localhost:${port}/docs |
 
 ## Run locally
 
 \`\`\`bash
-cp .env.example .env          # adjust if needed
-bun run db:ensure             # create the database (once)
-bun run db:migrate
-bun run db:seed               # optional demo data
+(cd ../.. && bun run db:migrate)   # shared migration history: database/migrations
+cp .env.example .env               # adjust if needed
+bun run db:seed                    # optional demo data
 bun run dev
 \`\`\`
 
@@ -132,7 +167,7 @@ bun run dev
 
 \`\`\`bash
 bun run typecheck && bun run lint && bun test
-TEST_DATABASE_URL=postgres://.../${database}_test bun run test:integration
+TEST_DATABASE_URL=postgres://.../driversim_test bun run test:integration
 \`\`\`
 `;
 
@@ -157,7 +192,7 @@ const main = async (): Promise<void> => {
 
   const port = values.port ? Number(values.port) : await nextFreePort();
   if (!Number.isInteger(port) || port < 1024 || port > 65_535) fail(`invalid port ${values.port}`);
-  const database = name.replace(/-/g, "_");
+  const schema = name.replace(/-/g, "_");
   const description = values.description ?? `DriverSim ${name}.`;
 
   // 1. Copy the template.
@@ -179,7 +214,7 @@ const main = async (): Promise<void> => {
       content
         .replaceAll(`@driversim/${TEMPLATE_NAME}`, `@driversim/${name}`)
         .replaceAll(TEMPLATE_NAME, name)
-        .replaceAll(TEMPLATE_DB, database),
+        .replaceAll(TEMPLATE_SCHEMA, schema),
     );
   }
   for (const file of [".env.example", "Dockerfile", "src/config/http.config.ts"]) {
@@ -195,7 +230,7 @@ const main = async (): Promise<void> => {
     const pkg = JSON.parse(content) as Record<string, unknown>;
     return `${JSON.stringify({ ...pkg, description }, null, 2)}\n`;
   });
-  await writeFile(join(target, "README.md"), serviceReadme(name, port, database, description));
+  await writeFile(join(target, "README.md"), serviceReadme(name, port, schema, description));
 
   // 4. Normalize formatting (removing example code can leave empty literals behind).
   const biome = join(ROOT, "node_modules", ".bin", process.platform === "win32" ? "biome.exe" : "biome");
@@ -203,32 +238,28 @@ const main = async (): Promise<void> => {
     Bun.spawnSync([biome, "check", "--write", target], { stdout: "ignore", stderr: "ignore" });
   }
 
-  // 5. Register the service for local infrastructure.
+  // 5. Join the shared database (migration history) and the service registry.
+  let adopted: string[] = [];
   if (!values["no-register"]) {
+    adopted = await adoptMigrations(target, schema);
     if (await exists(REGISTRY_FILE)) {
       await rewrite(
         REGISTRY_FILE,
-        (content) => `${content.trimEnd()}\n| ${name} | ${port} | ${database} | ${description} |\n`,
-      );
-    }
-    if (await exists(DB_INIT_FILE)) {
-      await rewrite(DB_INIT_FILE, (content) =>
-        content.includes(`"${database}"`)
-          ? content
-          : `${content.trimEnd()}\ncreate database "${database}";\ncreate database "${database}_test";\n`,
+        (content) => `${content.trimEnd()}\n| ${name} | ${port} | ${schema} | ${description} |\n`,
       );
     }
   }
 
-  console.log(`✔ Created ${relative(ROOT, target)} (port ${port}, database ${database})`);
+  console.log(`✔ Created ${relative(ROOT, target)} (port ${port}, schema ${schema})`);
+  if (adopted.length > 0) console.log(`  added to database/migrations: ${adopted.join(", ")}`);
   console.log(
     values["remove-example"] ? "  example domain removed" : "  example `note` domain kept for reference",
   );
   console.log(`\nNext steps:
   bun install
+  bun run db:migrate
   cd ${relative(ROOT, target)}
   cp .env.example .env
-  bun run db:ensure && bun run db:migrate
   bun run dev`);
 };
 

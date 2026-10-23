@@ -7,6 +7,34 @@
         "@biomejs/biome": "1.9.4",
       },
     },
+    "bootstrap": {
+      "name": "@driversim/bootstrap",
+      "version": "0.1.0",
+      "dependencies": {
+        "@driversim/core": "workspace:*",
+        "@driversim/http": "workspace:*",
+        "@driversim/observability": "workspace:*",
+      },
+      "devDependencies": {
+        "@driversim/testing": "workspace:*",
+        "@types/bun": "1.2.21",
+        "typescript": "5.7.3",
+      },
+    },
+    "database": {
+      "name": "@driversim/database",
+      "version": "0.1.0",
+      "dependencies": {
+        "@driversim/core": "workspace:*",
+        "@driversim/observability": "workspace:*",
+        "@driversim/postgres": "workspace:*",
+      },
+      "devDependencies": {
+        "@driversim/testing": "workspace:*",
+        "@types/bun": "1.2.21",
+        "typescript": "5.7.3",
+      },
+    },
     "packages/core": {
       "name": "@driversim/core",
       "version": "0.1.0",
@@ -122,6 +150,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@driversim/auth": "workspace:*",
+        "@driversim/bootstrap": "workspace:*",
         "@driversim/core": "workspace:*",
         "@driversim/http": "workspace:*",
         "@driversim/messaging": "workspace:*",
@@ -167,7 +196,11 @@
 
     "@driversim/auth": ["@driversim/auth@workspace:packages/infra/auth"],
 
+    "@driversim/bootstrap": ["@driversim/bootstrap@workspace:bootstrap"],
+
     "@driversim/core": ["@driversim/core@workspace:packages/core"],
+
+    "@driversim/database": ["@driversim/database@workspace:database"],
 
     "@driversim/http": ["@driversim/http@workspace:packages/http"],
 

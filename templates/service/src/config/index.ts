@@ -64,7 +64,7 @@ export const loadConfig = (source: Record<string, string | undefined> = process.
   return Object.freeze({
     app,
     http: toHttpConfig(env),
-    database: toDatabaseConfig(env),
+    database: toDatabaseConfig(env, app.serviceName),
     redis: { ...redis, keyPrefix: redis.keyPrefix ?? `${app.serviceName}:` },
     kafka: {
       ...kafka,

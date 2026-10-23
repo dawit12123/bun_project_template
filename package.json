@@ -3,7 +3,7 @@
   "private": true,
   "description": "DriverSim backend monorepo: standalone Bun + TypeScript + Hono microservices built from one hexagonal template.",
   "type": "module",
-  "workspaces": ["packages/*", "packages/infra/*", "templates/*", "services/*"],
+  "workspaces": ["bootstrap", "database", "packages/*", "packages/infra/*", "templates/*", "services/*"],
   "engines": {
     "bun": ">=1.2.21"
   },
@@ -15,7 +15,12 @@
     "lint:fix": "biome check --write .",
     "infra:up": "docker compose -f docker/docker-compose.yml up -d",
     "infra:down": "docker compose -f docker/docker-compose.yml down",
-    "infra:logs": "docker compose -f docker/docker-compose.yml logs -f"
+    "infra:logs": "docker compose -f docker/docker-compose.yml logs -f",
+    "db:ensure": "bun run --cwd database migrate ensure-database",
+    "db:migrate": "bun run --cwd database migrate up",
+    "db:rollback": "bun run --cwd database migrate down",
+    "db:status": "bun run --cwd database migrate status",
+    "db:create": "bun run --cwd database migrate create"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4"

@@ -76,3 +76,20 @@ describe("system endpoints", () => {
     expect(res.body.components.securitySchemes.bearerAuth.scheme).toBe("bearer");
   });
 });
+
+describe("one-time initialization", () => {
+  test("the OpenAPI document is generated once and then served from cache", async () => {
+    const fresh = await createTestContext();
+    const original = fresh.app.getOpenAPIDocument.bind(fresh.app);
+    let generations = 0;
+    fresh.app.getOpenAPIDocument = ((config: Parameters<typeof original>[0]) => {
+      generations += 1;
+      return original(config);
+    }) as typeof fresh.app.getOpenAPIDocument;
+
+    for (let index = 0; index < 5; index += 1) {
+      expect((await request(fresh.app, "GET", "/openapi.json")).status).toBe(200);
+    }
+    expect(generations).toBe(1);
+  });
+});

@@ -53,6 +53,11 @@ export class RedisKeyValueStore implements KeyValueStore {
     return { value: Number(value), ttlSeconds: Number(ttl) };
   }
 
+  /** Opens the connection; called at startup so the first request does not pay for it. */
+  async connect(): Promise<void> {
+    await this.client.connect();
+  }
+
   async ping(): Promise<void> {
     await this.client.send("PING", []);
   }

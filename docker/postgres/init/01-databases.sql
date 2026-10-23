@@ -1,4 +1,4 @@
--- Runs once, when the postgres volume is first created. One database per service (+ _test).
--- `bun run new-service` appends new services here; for an existing volume use `bun run db:ensure`.
-create database "service_template";
-create database "service_template_test";
+-- Runs once, when the postgres volume is first created.
+-- The platform uses ONE database ("driversim", created via POSTGRES_DB) with one schema per
+-- service; schemas and tables come from the shared migrations (bun run db:migrate).
+create database "driversim_test";

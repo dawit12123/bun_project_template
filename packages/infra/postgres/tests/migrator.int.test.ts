@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describeWithDatabase, resetTestDatabase, silentLogger } from "@driversim/testing";
 import { Migrator } from "../src/migrator";
+import { buildSearchPath, createPostgresClient } from "../src/postgres.client";
 
 const MIGRATIONS_DIR = join(import.meta.dir, "fixtures", "migrations");
 import type { SQL } from "bun";
@@ -55,5 +56,42 @@ describeWithDatabase("Migrator", () => {
     const migrator = new Migrator(sql, workDir, silentLogger);
     expect((await migrator.status())[0]?.state).toBe("drifted");
     await expect(migrator.up()).rejects.toThrow("checksum drift");
+  });
+});
+
+describeWithDatabase("search_path", () => {
+  test("owned schema first, extra schemas readable unqualified", async () => {
+    const admin = await resetTestDatabase(join(import.meta.dir, "fixtures", "migrations"));
+    await admin.unsafe(`
+      create schema owner_svc; create table owner_svc.things (id int);
+      create schema other_svc; create table other_svc.users (id int); insert into other_svc.users values (42);`);
+    await admin.close();
+
+    const sql = createPostgresClient({
+      url: process.env.TEST_DATABASE_URL ?? "",
+      applicationName: "search-path-test",
+      poolMax: 1,
+      idleTimeoutSeconds: 5,
+      connectTimeoutSeconds: 5,
+      maxLifetimeSeconds: 60,
+      statementTimeoutMs: 5_000,
+      schema: "owner_svc",
+      extraSchemas: ["other_svc"],
+    });
+    const [path] = await sql`show search_path`;
+    const [user] = await sql`select id from users`;
+    await sql`insert into things values (1)`;
+    const [owned] = await sql`select count(*)::int as n from owner_svc.things`;
+    await sql.close();
+
+    expect(path.search_path.replaceAll(" ", "")).toBe("owner_svc,other_svc");
+    expect(user.id).toBe(42);
+    expect(owned.n).toBe(1);
+  });
+
+  test("buildSearchPath validates and de-duplicates", () => {
+    expect(buildSearchPath("a", ["b", "a"])).toBe("a,b");
+    expect(buildSearchPath(undefined, [])).toBeUndefined();
+    expect(() => buildSearchPath("bad;drop", [])).toThrow("Invalid schema name");
   });
 });

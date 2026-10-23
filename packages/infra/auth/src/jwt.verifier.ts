@@ -34,6 +34,12 @@ export class JwtTokenVerifier implements TokenVerifier {
     private readonly config: JwtVerifierOptions,
   ) {}
 
+  /** Prefetches a remote JWKS (no-op for inline keys) so the first request skips the key fetch. */
+  async warmUp(): Promise<void> {
+    const reload = (this.keys as { reload?: () => Promise<void> }).reload;
+    if (typeof reload === "function") await reload.call(this.keys);
+  }
+
   async verify(token: string): Promise<AuthIdentity> {
     let payload: unknown;
     try {

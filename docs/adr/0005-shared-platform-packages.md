@@ -14,6 +14,7 @@
   | postgres | client, migrator, seeder |
   | redis | key-value stores, rate limiter |
   | messaging | Kafka, memory bus, outbox, inbox |
+  | bootstrap (repo root `bootstrap/`) | process singletons (logger, metrics, clock) + shared `startService` / graceful shutdown |
   | testing | test utilities (dev dependency) |
 
   Adapter packages for external systems live under `packages/infra/` (postgres, redis,

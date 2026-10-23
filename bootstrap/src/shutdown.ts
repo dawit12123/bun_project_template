@@ -12,6 +12,8 @@ export interface GracefulShutdownOptions {
   onBegin: () => void;
   steps: readonly ShutdownStep[];
   exit?: (code: number) => void;
+  /** Listen for SIGTERM/SIGINT (default). Tests disable it and call the returned function. */
+  handleSignals?: boolean;
 }
 
 /**
@@ -48,7 +50,9 @@ export const registerGracefulShutdown = (options: GracefulShutdownOptions) => {
     exit(failed ? 1 : 0);
   };
 
-  process.once("SIGTERM", () => void shutdown("SIGTERM"));
-  process.once("SIGINT", () => void shutdown("SIGINT"));
+  if (options.handleSignals !== false) {
+    process.once("SIGTERM", () => void shutdown("SIGTERM"));
+    process.once("SIGINT", () => void shutdown("SIGINT"));
+  }
   return shutdown;
 };
