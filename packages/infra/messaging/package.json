@@ -1,0 +1,25 @@
+{
+  "name": "@driversim/messaging",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Event envelope, Kafka/Redpanda publisher & consumer, in-memory bus, transactional outbox and inbox.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@driversim/core": "workspace:*",
+    "kafkajs": "2.2.4",
+    "zod": "3.24.4"
+  },
+  "devDependencies": {
+    "@driversim/observability": "workspace:*",
+    "@driversim/testing": "workspace:*",
+    "@types/bun": "1.2.21",
+    "typescript": "5.7.3"
+  }
+}

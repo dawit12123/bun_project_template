@@ -1,0 +1,24 @@
+{
+  "name": "driversim-backend",
+  "private": true,
+  "description": "DriverSim backend monorepo: standalone Bun + TypeScript + Hono microservices built from one hexagonal template.",
+  "type": "module",
+  "workspaces": ["packages/*", "packages/infra/*", "templates/*", "services/*"],
+  "engines": {
+    "bun": ">=1.2.21"
+  },
+  "scripts": {
+    "new-service": "bun scripts/new-service.ts",
+    "typecheck": "bun run --filter \"*\" typecheck",
+    "test": "bun run --filter \"*\" test",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "infra:up": "docker compose -f docker/docker-compose.yml up -d",
+    "infra:down": "docker compose -f docker/docker-compose.yml down",
+    "infra:logs": "docker compose -f docker/docker-compose.yml logs -f"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4"
+  },
+  "trustedDependencies": ["@biomejs/biome"]
+}

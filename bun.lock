@@ -1,0 +1,226 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "driversim-backend",
+      "devDependencies": {
+        "@biomejs/biome": "1.9.4",
+      },
+    },
+    "packages/core": {
+      "name": "@driversim/core",
+      "version": "0.1.0",
+      "dependencies": {
+        "zod": "3.24.4",
+      },
+      "devDependencies": {
+        "@types/bun": "1.2.21",
+        "typescript": "5.7.3",
+      },
+    },
+    "packages/http": {
+      "name": "@driversim/http",
+      "version": "0.1.0",
+      "dependencies": {
+        "@driversim/core": "workspace:*",
+        "@hono/swagger-ui": "0.5.3",
+        "@hono/zod-openapi": "0.18.4",
+        "hono": "4.6.20",
+        "zod": "3.24.4",
+      },
+      "devDependencies": {
+        "@driversim/auth": "workspace:*",
+        "@driversim/observability": "workspace:*",
+        "@driversim/redis": "workspace:*",
+        "@driversim/testing": "workspace:*",
+        "@types/bun": "1.2.21",
+        "typescript": "5.7.3",
+      },
+    },
+    "packages/infra/auth": {
+      "name": "@driversim/auth",
+      "version": "0.1.0",
+      "dependencies": {
+        "@driversim/core": "workspace:*",
+        "jose": "5.9.6",
+        "zod": "3.24.4",
+      },
+      "devDependencies": {
+        "@driversim/testing": "workspace:*",
+        "@types/bun": "1.2.21",
+        "typescript": "5.7.3",
+      },
+    },
+    "packages/infra/messaging": {
+      "name": "@driversim/messaging",
+      "version": "0.1.0",
+      "dependencies": {
+        "@driversim/core": "workspace:*",
+        "kafkajs": "2.2.4",
+        "zod": "3.24.4",
+      },
+      "devDependencies": {
+        "@driversim/observability": "workspace:*",
+        "@driversim/testing": "workspace:*",
+        "@types/bun": "1.2.21",
+        "typescript": "5.7.3",
+      },
+    },
+    "packages/infra/observability": {
+      "name": "@driversim/observability",
+      "version": "0.1.0",
+      "dependencies": {
+        "@driversim/core": "workspace:*",
+        "prom-client": "15.1.3",
+      },
+      "devDependencies": {
+        "@types/bun": "1.2.21",
+        "typescript": "5.7.3",
+      },
+    },
+    "packages/infra/postgres": {
+      "name": "@driversim/postgres",
+      "version": "0.1.0",
+      "dependencies": {
+        "@driversim/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@driversim/observability": "workspace:*",
+        "@driversim/testing": "workspace:*",
+        "@types/bun": "1.2.21",
+        "typescript": "5.7.3",
+      },
+    },
+    "packages/infra/redis": {
+      "name": "@driversim/redis",
+      "version": "0.1.0",
+      "dependencies": {
+        "@driversim/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "1.2.21",
+        "typescript": "5.7.3",
+      },
+    },
+    "packages/testing": {
+      "name": "@driversim/testing",
+      "version": "0.1.0",
+      "dependencies": {
+        "@driversim/auth": "workspace:*",
+        "@driversim/core": "workspace:*",
+        "@driversim/observability": "workspace:*",
+        "@driversim/postgres": "workspace:*",
+        "jose": "5.9.6",
+      },
+      "devDependencies": {
+        "@types/bun": "1.2.21",
+        "typescript": "5.7.3",
+      },
+    },
+    "templates/service": {
+      "name": "@driversim/service-template",
+      "version": "0.1.0",
+      "dependencies": {
+        "@driversim/auth": "workspace:*",
+        "@driversim/core": "workspace:*",
+        "@driversim/http": "workspace:*",
+        "@driversim/messaging": "workspace:*",
+        "@driversim/observability": "workspace:*",
+        "@driversim/postgres": "workspace:*",
+        "@driversim/redis": "workspace:*",
+        "@hono/zod-openapi": "0.18.4",
+        "hono": "4.6.20",
+        "zod": "3.24.4",
+      },
+      "devDependencies": {
+        "@biomejs/biome": "1.9.4",
+        "@driversim/testing": "workspace:*",
+        "@types/bun": "1.2.21",
+        "jose": "5.9.6",
+        "typescript": "5.7.3",
+      },
+    },
+  },
+  "trustedDependencies": [
+    "@biomejs/biome",
+  ],
+  "packages": {
+    "@asteasolutions/zod-to-openapi": ["@asteasolutions/zod-to-openapi@7.3.4", "", { "dependencies": { "openapi3-ts": "^4.1.2" }, "peerDependencies": { "zod": "^3.20.2" } }, "sha512-/2rThQ5zPi9OzVwes6U7lK1+Yvug0iXu25olp7S0XsYmOqnyMfxH7gdSQjn/+DSOHRg7wnotwGJSyL+fBKdnEA=="],
+
+    "@biomejs/biome": ["@biomejs/biome@1.9.4", "", { "optionalDependencies": { "@biomejs/cli-darwin-arm64": "1.9.4", "@biomejs/cli-darwin-x64": "1.9.4", "@biomejs/cli-linux-arm64": "1.9.4", "@biomejs/cli-linux-arm64-musl": "1.9.4", "@biomejs/cli-linux-x64": "1.9.4", "@biomejs/cli-linux-x64-musl": "1.9.4", "@biomejs/cli-win32-arm64": "1.9.4", "@biomejs/cli-win32-x64": "1.9.4" }, "bin": { "biome": "bin/biome" } }, "sha512-1rkd7G70+o9KkTn5KLmDYXihGoTaIGO9PIIN2ZB7UJxFrWw04CZHPYiMRjYsaDvVV7hP1dYNRLxSANLaBFGpog=="],
+
+    "@biomejs/cli-darwin-arm64": ["@biomejs/cli-darwin-arm64@1.9.4", "", { "os": "darwin", "cpu": "arm64" }, "sha512-bFBsPWrNvkdKrNCYeAp+xo2HecOGPAy9WyNyB/jKnnedgzl4W4Hb9ZMzYNbf8dMCGmUdSavlYHiR01QaYR58cw=="],
+
+    "@biomejs/cli-darwin-x64": ["@biomejs/cli-darwin-x64@1.9.4", "", { "os": "darwin", "cpu": "x64" }, "sha512-ngYBh/+bEedqkSevPVhLP4QfVPCpb+4BBe2p7Xs32dBgs7rh9nY2AIYUL6BgLw1JVXV8GlpKmb/hNiuIxfPfZg=="],
+
+    "@biomejs/cli-linux-arm64": ["@biomejs/cli-linux-arm64@1.9.4", "", { "os": "linux", "cpu": "arm64" }, "sha512-fJIW0+LYujdjUgJJuwesP4EjIBl/N/TcOX3IvIHJQNsAqvV2CHIogsmA94BPG6jZATS4Hi+xv4SkBBQSt1N4/g=="],
+
+    "@biomejs/cli-linux-arm64-musl": ["@biomejs/cli-linux-arm64-musl@1.9.4", "", { "os": "linux", "cpu": "arm64" }, "sha512-v665Ct9WCRjGa8+kTr0CzApU0+XXtRgwmzIf1SeKSGAv+2scAlW6JR5PMFo6FzqqZ64Po79cKODKf3/AAmECqA=="],
+
+    "@biomejs/cli-linux-x64": ["@biomejs/cli-linux-x64@1.9.4", "", { "os": "linux", "cpu": "x64" }, "sha512-lRCJv/Vi3Vlwmbd6K+oQ0KhLHMAysN8lXoCI7XeHlxaajk06u7G+UsFSO01NAs5iYuWKmVZjmiOzJ0OJmGsMwg=="],
+
+    "@biomejs/cli-linux-x64-musl": ["@biomejs/cli-linux-x64-musl@1.9.4", "", { "os": "linux", "cpu": "x64" }, "sha512-gEhi/jSBhZ2m6wjV530Yy8+fNqG8PAinM3oV7CyO+6c3CEh16Eizm21uHVsyVBEB6RIM8JHIl6AGYCv6Q6Q9Tg=="],
+
+    "@biomejs/cli-win32-arm64": ["@biomejs/cli-win32-arm64@1.9.4", "", { "os": "win32", "cpu": "arm64" }, "sha512-tlbhLk+WXZmgwoIKwHIHEBZUwxml7bRJgk0X2sPyNR3S93cdRq6XulAZRQJ17FYGGzWne0fgrXBKpl7l4M87Hg=="],
+
+    "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@1.9.4", "", { "os": "win32", "cpu": "x64" }, "sha512-8Y5wMhVIPaWe6jw2H+KlEm4wP/f7EW3810ZLmDlrEEy5KvBsb9ECEfu/kMWD484ijfQ8+nIi0giMgu9g1UAuuA=="],
+
+    "@driversim/auth": ["@driversim/auth@workspace:packages/infra/auth"],
+
+    "@driversim/core": ["@driversim/core@workspace:packages/core"],
+
+    "@driversim/http": ["@driversim/http@workspace:packages/http"],
+
+    "@driversim/messaging": ["@driversim/messaging@workspace:packages/infra/messaging"],
+
+    "@driversim/observability": ["@driversim/observability@workspace:packages/infra/observability"],
+
+    "@driversim/postgres": ["@driversim/postgres@workspace:packages/infra/postgres"],
+
+    "@driversim/redis": ["@driversim/redis@workspace:packages/infra/redis"],
+
+    "@driversim/service-template": ["@driversim/service-template@workspace:templates/service"],
+
+    "@driversim/testing": ["@driversim/testing@workspace:packages/testing"],
+
+    "@hono/swagger-ui": ["@hono/swagger-ui@0.5.3", "", { "peerDependencies": { "hono": ">=4.0.0" } }, "sha512-Hn90DOOJ62ICJQplQvCDVpi9Jcn6EhtRaiffyJIS53wA5RmRLtMCDQGVc0bor8vQD7JIwpkweWjs+3cycp+IvA=="],
+
+    "@hono/zod-openapi": ["@hono/zod-openapi@0.18.4", "", { "dependencies": { "@asteasolutions/zod-to-openapi": "^7.1.0", "@hono/zod-validator": "^0.4.1" }, "peerDependencies": { "hono": ">=4.3.6", "zod": "3.*" } }, "sha512-6NHMHU96Hh32B1yDhb94Z4Z5/POsmEu2AXpWLWcBq9arskRnOMt2752yEoXoADV8WUAc7H1IkNaQHGj1ytXbYw=="],
+
+    "@hono/zod-validator": ["@hono/zod-validator@0.4.3", "", { "peerDependencies": { "hono": ">=3.9.0", "zod": "^3.19.1" } }, "sha512-xIgMYXDyJ4Hj6ekm9T9Y27s080Nl9NXHcJkOvkXPhubOLj8hZkOL8pDnnXfvCf5xEE8Q4oMFenQUZZREUY2gqQ=="],
+
+    "@opentelemetry/api": ["@opentelemetry/api@1.10.0", "", {}, "sha512-lMkyes8iHrG+mk6WH7X70MdCLI2RS0FwNBY1PyQ8UemaijE2m5mv5A0Niy3HtbYTFrgkUEQjFMXmSAk2hQDuPQ=="],
+
+    "@types/bun": ["@types/bun@1.2.21", "", { "dependencies": { "bun-types": "1.2.21" } }, "sha512-NiDnvEqmbfQ6dmZ3EeUO577s4P5bf4HCTXtI6trMc6f6RzirY5IrF3aIookuSpyslFzrnvv2lmEWv5HyC1X79A=="],
+
+    "@types/node": ["@types/node@26.6.5", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-uMzsv9stDdofIZBx4UGh4Z9ZgXnGC9seRDscilBcTHAeOFk67MZg/k9bWVfO+bk4qZmG+l52hRnLwUiH2LnJTg=="],
+
+    "@types/react": ["@types/react@19.3.0", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg=="],
+
+    "bintrees": ["bintrees@1.0.2", "", {}, "sha512-VOMgTMwjAaUG580SXn3LacVgjurrbMme7ZZNYGSSV7mmtY6QQRh0Eg3pwIcntQ77DErK1L0NxkbetjcoXzVwKw=="],
+
+    "bun-types": ["bun-types@1.2.21", "", { "dependencies": { "@types/node": "*" }, "peerDependencies": { "@types/react": "^19" } }, "sha512-sa2Tj77Ijc/NTLS0/Odjq/qngmEPZfbfnOERi0KRUYhT9R8M4VBioWVmMWE5GrYbKMc+5lVybXygLdibHaqVqw=="],
+
+    "csstype": ["csstype@3.2.3", "", {}, "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ=="],
+
+    "hono": ["hono@4.6.20", "", {}, "sha512-5qfNQeaIptMaJKyoJ6N/q4gIq0DBp2FCRaLNuUI3LlJKL4S37DY/rLL1uAxA4wrPB39tJ3s+f7kgI79O4ScSug=="],
+
+    "jose": ["jose@5.9.6", "", {}, "sha512-AMlnetc9+CV9asI19zHmrgS/WYsWUwCn2R7RzlbJWD7F9eWYUTGyBmU9o6PxngtLGOiDGPRu+Uc4fhKzbpteZQ=="],
+
+    "kafkajs": ["kafkajs@2.2.4", "", {}, "sha512-j/YeapB1vfPT2iOIUn/vxdyKEuhuY2PxMBvf5JWux6iSaukAccrMtXEY/Lb7OvavDhOWME589bpLrEdnVHjfjA=="],
+
+    "openapi3-ts": ["openapi3-ts@4.6.2", "", { "dependencies": { "yaml": "^2.9.1" } }, "sha512-gyyil3DweqhXiEhTqtAs9wwRLfWHmetwhI4kmM5Rn0d6gtmK863Ki7qqbQnp9+Wwlqoe3B1LFWj7kMp5ctE4rQ=="],
+
+    "prom-client": ["prom-client@15.1.3", "", { "dependencies": { "@opentelemetry/api": "^1.4.0", "tdigest": "^0.1.1" } }, "sha512-6ZiOBfCywsD4k1BN9IX0uZhF+tJkV8q8llP64G5Hajs4JOeVLPCwpPVcpXy3BwYiUGgyJzsJJQeOIv7+hDSq8g=="],
+
+    "tdigest": ["tdigest@0.1.3", "", { "dependencies": { "bintrees": "1.0.2" } }, "sha512-zbRt+lT+/H4fRItHshczHErVCQnitJk8MfMT24MqFJf3YL7SJJPqGIGeuOdvxXxM/AHFzKBl7WoyaYwqO9s3Kw=="],
+
+    "typescript": ["typescript@5.7.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw=="],
+
+    "undici-types": ["undici-types@8.9.0", "", {}, "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg=="],
+
+    "yaml": ["yaml@2.9.1", "", { "bin": { "yaml": "bin.mjs" } }, "sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw=="],
+
+    "zod": ["zod@3.24.4", "", {}, "sha512-OdqJE9UDRPwWsrHjLN2F8bPxvwJBK22EHLWtanu0LSYr5YqzsaaW3RMgmjwr8Rypg5k+meEJdSPXJZXE/yqOMg=="],
+  }
+}
